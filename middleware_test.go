@@ -1,3 +1,4 @@
+// Package interactionplugin_test Testing
 package interactionplugin_test
 
 import (
@@ -24,9 +25,9 @@ func TestDemo(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 
-	stringJson := `{"type": 1}`
+	stringJSON := `{"type": 1}`
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://localhost", bytes.NewBufferString(stringJson))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://localhost", bytes.NewBufferString(stringJSON))
 	if err != nil {
 		t.Fatal(err)
 	}

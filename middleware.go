@@ -1,3 +1,4 @@
+// Package interactionplugin Middleware plugin
 package interactionplugin
 
 import (
