@@ -1,7 +1,7 @@
 displayName: Discord Interaction signature verifier
 type: middleware
 
-import: github.com/ndelta0/traefik-discord-interaction-verifier
+import: github.com/ndelta0/interactionverifier
 
 summary: 'Verify Interaction request signature'
 

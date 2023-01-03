@@ -1,5 +1,5 @@
-// Package interactionplugin Middleware plugin
-package interactionplugin
+// Package interactionverifier Middleware plugin
+package interactionverifier
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ type Middleware struct {
 }
 
 // New created a new Middleware plugin.
-func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+func New(_ context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 	if len(config.PublicKey) == 0 {
 		return nil, fmt.Errorf("publicKey cannot be empty")
 	}

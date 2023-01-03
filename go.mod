@@ -1,3 +1,3 @@
-module github.com/ndelta0/traefik-discord-interaction-verifier
+module github.com/ndelta0/interactionverifier
 
 go 1.19
