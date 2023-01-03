@@ -1,10 +1,9 @@
 displayName: Discord Interaction signature verifier
 type: middleware
-iconPath: .assets/icon.png
 
 import: github.com/ndelta0/traefik-discord-interaction-verifier
 
 summary: 'Verify Interaction request signature'
 
 testData:
-  PublicKey: """
+  PublicKey: ""
