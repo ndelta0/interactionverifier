@@ -1,12 +1,10 @@
-displayName: Demo Plugin
+displayName: Discord Interaction signature verifier
 type: middleware
 iconPath: .assets/icon.png
 
-import: github.com/traefik/plugindemo
+import: github.com/ndelta0/traefik-discord-interaction-verifier
 
-summary: '[Demo] Add Request Header'
+summary: 'Verify Interaction request signature'
 
 testData:
-  Headers:
-    X-Demo: test
-    X-URL: '{{URL}}'
+  PublicKey: """

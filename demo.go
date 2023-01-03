@@ -1,66 +1,94 @@
-// Package plugindemo a demo plugin.
-package plugindemo
+package interactionplugin
 
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"net/http"
-	"text/template"
 )
 
 // Config the plugin configuration.
 type Config struct {
-	Headers map[string]string `json:"headers,omitempty"`
+	PublicKey string `json:"publicKey,omitempty"`
 }
 
 // CreateConfig creates the default plugin configuration.
 func CreateConfig() *Config {
 	return &Config{
-		Headers: make(map[string]string),
+		PublicKey: "",
 	}
 }
 
-// Demo a Demo plugin.
-type Demo struct {
-	next     http.Handler
-	headers  map[string]string
-	name     string
-	template *template.Template
+// Middleware a Middleware plugin.
+type Middleware struct {
+	next      http.Handler
+	publicKey string
+	name      string
 }
 
-// New created a new Demo plugin.
+// New created a new Middleware plugin.
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	if len(config.Headers) == 0 {
-		return nil, fmt.Errorf("headers cannot be empty")
+	if len(config.PublicKey) == 0 {
+		return nil, fmt.Errorf("publicKey cannot be empty")
 	}
 
-	return &Demo{
-		headers:  config.Headers,
-		next:     next,
-		name:     name,
-		template: template.New("demo").Delims("[[", "]]"),
+	return &Middleware{
+		publicKey: config.PublicKey,
+		next:      next,
+		name:      name,
 	}, nil
 }
 
-func (a *Demo) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	for key, value := range a.headers {
-		tmpl, err := a.template.Parse(value)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
+func (a *Middleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	// Get signature and timestamp from header
+	signature := req.Header.Get("X-Signature-Ed25519")
+	timestamp := req.Header.Get("X-Signature-Timestamp")
 
-		writer := &bytes.Buffer{}
-
-		err = tmpl.Execute(writer, req)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		req.Header.Set(key, writer.String())
+	// Reject if signature or timestamp is empty or doesn't exist
+	if len(signature) == 0 || len(timestamp) == 0 {
+		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
+		return
 	}
 
+	// Get body
+	body, err := req.GetBody()
+
+	// Reject if body is empty or doesn't exist
+	if err != nil {
+		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Read body as string
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(body)
+	if err != nil {
+		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	bodyString := buf.String()
+
+	// Create public key var
+	key := ed25519.PublicKey(a.publicKey)
+
+	// Get signature bytes
+	sig, err := hex.DecodeString(signature)
+	if err != nil {
+		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Construct message
+	message := timestamp + bodyString
+
+	// Verify signature
+	if !ed25519.Verify(key, []byte(message), sig) {
+		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Call next middleware
 	a.next.ServeHTTP(rw, req)
 }

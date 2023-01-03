@@ -1,49 +1,35 @@
-package plugindemo_test
+package interactionplugin_test
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/traefik/plugindemo"
+	"github.com/ndelta0/traefik-discord-interaction-verifier"
 )
 
 func TestDemo(t *testing.T) {
-	cfg := plugindemo.CreateConfig()
-	cfg.Headers["X-Host"] = "[[.Host]]"
-	cfg.Headers["X-Method"] = "[[.Method]]"
-	cfg.Headers["X-URL"] = "[[.URL]]"
-	cfg.Headers["X-URL"] = "[[.URL]]"
-	cfg.Headers["X-Demo"] = "test"
+	cfg := interactionplugin.CreateConfig()
+	cfg.PublicKey = "7c53f11c27f19405c8ad63df2a034c3b89f57fdbfb0bd26b7114d25b675c9ae9"
 
 	ctx := context.Background()
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
 
-	handler, err := plugindemo.New(ctx, next, cfg, "demo-plugin")
+	handler, err := interactionplugin.New(ctx, next, cfg, "interaction-plugin")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	recorder := httptest.NewRecorder()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost", nil)
+	stringJson := `{"type": 1}`
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://localhost", bytes.NewBufferString(stringJson))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	handler.ServeHTTP(recorder, req)
-
-	assertHeader(t, req, "X-Host", "localhost")
-	assertHeader(t, req, "X-URL", "http://localhost")
-	assertHeader(t, req, "X-Method", "GET")
-	assertHeader(t, req, "X-Demo", "test")
-}
-
-func assertHeader(t *testing.T, req *http.Request, key, expected string) {
-	t.Helper()
-
-	if req.Header.Get(key) != expected {
-		t.Errorf("invalid header value: %s", req.Header.Get(key))
-	}
 }
